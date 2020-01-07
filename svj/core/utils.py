@@ -330,7 +330,7 @@ def tarball(module, outfile=None, dry=False):
 
     # Fix the output name of the tarball
     if outfile is None:
-        outfile = osp.join(os.getcwd(), osp.basename(toplevel_git_dir))
+        outfile = osp.join(os.getcwd(), osp.basename(toplevel_git_dir) + '.tar')
 
     with switchdir(toplevel_git_dir):
         # Check if there are uncommitted changes
