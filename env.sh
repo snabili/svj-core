@@ -8,7 +8,7 @@ setup() {
     export PATH="${pipdir}/bin:${pythondir}/bin:${PATH}"
     export PYTHONPATH="${pipdir}/lib/python2.7/site-packages/:${PYTHONPATH}"
     echo "Setup for architecture ${SCRAM_ARCH}"
-    alias pip="${pipdir}/bin/pip"  # To avoid any local pip installations
+    pip(){ ${pipdir}/bin/pip "$@"; }  # To avoid any local pip installations
     }
 
 if [[ "$SCRAM_ARCH" == "slc6"* ]]; then
