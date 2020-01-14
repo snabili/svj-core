@@ -292,26 +292,6 @@ def read_preprocessing_directives(filename):
     return r
 
 
-def tarball_head(outfile=None):
-    """
-    Creates a tarball of the latest commit
-    """
-    if outfile is None:
-        outfile = osp.join(os.getcwd(), 'svj.genprod.tar')
-    outfile = osp.abspath(outfile)
-
-    with switchdir(osp.join(svj.genprod.SVJ_TOP_DIR, '..')):
-        try:
-            run_command(['git', 'diff-index', '--quiet', 'HEAD', '--'])
-        except subprocess.CalledProcessError:
-            logger.error(
-                'Uncommitted changes detected; it is unlikely you want a tarball '
-                'with some changes not committed.'
-                )
-            raise
-        run_command(['git', 'archive', '-o', outfile, 'HEAD'])
-
-
 def tarball(module, outfile=None, dry=False):
     """
     Takes a python module or a path to a file of said module, goes to the associated
@@ -364,3 +344,85 @@ def tarball(module, outfile=None, dry=False):
         logger.info('Created tarball {0}'.format(outfile))
         return outfile
 
+
+def tarball_cmssw(cmssw_path, outdir='.', tag=None, dry=False):
+    """
+    :param cmssw_path: Path to CMSSW_BASE (i.e. ../src)
+    :type cmssw_path: str
+    :param outdir: Path to put the tarball. Defaults to cwd.
+    :type outdir: str
+    :param tag: Optional tag to append to the tarball name (for convenient versioning)
+    :type tag: str, optional
+    """
+    cmssw_path = osp.abspath(cmssw_path)
+    outdir = osp.abspath(outdir)
+    check_is_cmssw_path(cmssw_path)
+    # Determine the final filename with the optional tag
+    dst = osp.basename(cmssw_path).strip('/') + ('' if tag is None else '_' + tag) + '.tar.gz'
+    dst_abs = osp.abspath(osp.join(outdir, dst))
+    if osp.isfile(dst_abs): raise OSError('{0} already exists'.format(dst_abs))
+    logger.warning(
+        'Tarballing {0} ==> {1}'
+        .format(osp.abspath(cmssw_path), dst_abs)
+        )
+    with switchdir(osp.dirname(cmssw_path)):
+        cmd = [
+            'tar',
+            '--exclude-caches-all',
+            '--exclude-vcs',
+            '-zcvf',
+            dst_abs,
+            osp.basename(cmssw_path),
+            # '--exclude=src',  # Necessary? Probably do need src... it's anyway tiny, usually
+            '--exclude=tmp',
+            ]
+        run_command(cmd, dry=dry)
+
+
+def extract_tarball(tarball, outdir='.', dry=False):
+    """
+    Extracts a tarball to outdir
+    """
+    tarball = osp.abspath(tarball)
+    outdir = osp.abspath(outdir)
+    logger.warning(
+        'Extracting {0} ==> {1}'
+        .format(tarball, outdir)
+        )
+    cmd = [
+        'tar', '-xvf', tarball,
+        '-C', outdir
+        ]
+    run_command(cmd, dry=dry)
+
+
+def extract_tarball_cmssw(tarball, outdir='.', dry=False):
+    """
+    Extracts a tarball to outdir, and returns the extracted CMSSW dir
+    """
+    extract_tarball(tarball, outdir, dry)
+    # return the CMSSW directory
+    if dry: return 'CMSSW_dry'
+    return [ d for d in glob.glob(osp.join(outdir, 'CMSSW*')) if not d.endswith('.gz')][0]
+
+
+def check_is_cmssw_path(path):
+    """
+    Checks whether the passed path contains a CMSSW distribution.
+    """
+    abs_path = osp.abspath(path)
+    if not osp.basename(path).startswith('CMSSW'):
+        raise ValueError(
+            'Expected {0} to start with "CMSSW" (path: {1})'
+            .format(osp.basename(path), abs_path)
+            )
+    if not osp.isdir(path):
+        raise OSError(
+            '{0} is not a directory (path: {1})'
+            .format(path, abs_path)
+            )
+    if not osp.isdir(osp.join(path, 'src')):
+        raise OSError(
+            '{0} is not a directory (path: {1})'
+            .format(osp.join(path, 'src'), abs_path)
+            )

@@ -14,3 +14,6 @@ from . import utils
 def tarball(outfile=None, dry=False):
     """ Wrapper function to create a tarball of svj.core """
     return utils.tarball(__file__, outfile=outfile, dry=dry)
+
+import condor.jobfiles
+import condor.submitters
