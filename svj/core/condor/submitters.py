@@ -124,7 +124,7 @@ class ProductionSubmitter(PySubmitter):
             self.jdl.to_file(self.jdl_file, dry=dry)
 
             # Create also a small script to delete the output and logs
-            svj.genprod.condor.shfile.SHClean().to_file('clean.sh', dry=dry)
+            svj.core.condor.jobfiles.SHClean().to_file('clean.sh', dry=dry)
 
             # Submit the job
             submit_jdl(self.jdl_file)
