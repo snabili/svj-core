@@ -62,18 +62,17 @@ class PySubmitter(Submitter):
             svj.genprod.SVJ_TARBALL = self.tarball
 
 
-    def preprocessing_override(self, key, type=None):
+    def preprocessing_override(self, key, type=str):
         """
         If key exists in the preprocessing, set it as an attribute to this instance.
         Returns True if a key was set, False if not.
         """
         if key in self.preprocessing:
-            value = self.preprocessing[key]
-            if not(type is None): value = type(value)
-            setattr(self, key, self.preprocessing[key])
+            value = type(self.preprocessing[key])
+            setattr(self, key, value)
             logger.info(
                 'Setting %s %s based on preprocessing directive in %s',
-                key, self.preprocessing[key], self.python_file
+                key, value, self.python_file
                 )
             return True
         return False
