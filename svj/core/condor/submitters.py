@@ -23,7 +23,7 @@ class Submitter(object):
     def add_module(self, module):
         self.needs_modules.append(module)
 
-    def create_module_tarballs(self):
+    def create_module_tarballs(self, dry=False):
         if self._iscalled_create_module_tarballs:
             logger.error(
                 'create_module_tarballs called twice, should not happen. '
@@ -33,7 +33,10 @@ class Submitter(object):
         self._iscalled_create_module_tarballs = True
         for module in self.needs_modules:
             logger.info('Creating tarball for %s', module)
-            self.module_tarballs[module] = svj.core.utils.tarball(module)
+            if dry:
+                self.module_tarballs[module] = 'tarball_{0}.tar'.format(module.__name__)
+            else:
+                self.module_tarballs[module] = svj.core.utils.tarball(module)
 
 
 class PySubmitter(Submitter):
@@ -109,7 +112,6 @@ class ProductionSubmitter(PySubmitter):
 
     def submit(self, dry=False):
         super(ProductionSubmitter, self).submit(dry=dry)
-
         for module, code_tarball in self.module_tarballs.items():
             # Make sure the .sh will install the code tarball
             self.sh.add_code_tarball(code_tarball)
