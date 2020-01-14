@@ -90,7 +90,7 @@ class PySubmitter(Submitter):
             logger.info('Copying {0} --> {1}'.format(self.python_file, self.python_file_basename))
             if not dry: shutil.copyfile(self.python_file, self.python_file_basename)
             # Create the code tarballs
-            self.create_module_tarballs()
+            self.create_module_tarballs(dry=dry)
 
 
 
