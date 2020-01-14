@@ -204,7 +204,7 @@ def setup_cmssw(workdir, version, arch):
     logger.info('Done setting up {0} {1} in {2}'.format(version, arch, workdir))
 
 
-def compile_cmssw_src(cmssw_src, arch):
+def compile_cmssw_src(cmssw_src, arch, clean_env=False):
     """
     Generic function to (re)compile a CMSSW setup
     """
@@ -220,7 +220,24 @@ def compile_cmssw_src(cmssw_src, arch):
         'cmsenv',
         'scram b',
         ]
-    run_multiple_commands(cmds)
+
+    if clean_env:
+        env = os.environ.copy()
+        for var in [
+            'ROOTSYS',
+            'PATH',
+            'LD_LIBRARY_PATH',
+            'DYLD_LIBRARY_PATH',
+            'SHLIB_PATH',
+            'LIBPATH',
+            'PYTHONPATH',
+            'MANPATH',
+            'CMAKE_PREFIX_PATH',
+            'JUPYTER_PATH',
+            ]:
+            del env[var]
+
+    run_multiple_commands(cmds, env=env if clean_env else None)
     logger.info('Done compiling {0} with scram arch {1}'.format(cmssw_src, arch))
 
 
