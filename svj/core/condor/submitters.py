@@ -127,15 +127,15 @@ class ProductionSubmitter(PySubmitter):
             svj.core.condor.jobfiles.SHClean().to_file('clean.sh', dry=dry)
 
             # Submit the job
-            submit_jdl(self.jdl_file)
+            submit_jdl(self.jdl_file, dry=dry)
 
 
 def submit_jdl(jdl_file, dry=False):
     try:
         from cjm import TodoList
         logger.info('Found installation of cjm')
-        if not dry: TodoList().submit(self.jdl_file)
+        if not dry: TodoList().submit(jdl_file)
     except ImportError:
         logger.info('Submitting using plain condor_submit')
-        cmd = ['condor_submit', self.jdl_file]
-        svj.core.utils.run_command(self.jdl_file, dry=dry, shell=True)
+        cmd = ['condor_submit', jdl_file]
+        svj.core.utils.run_command(jdl_file, dry=dry, shell=True)
