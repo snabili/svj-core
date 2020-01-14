@@ -111,7 +111,7 @@ class ProductionSubmitter(PySubmitter):
     def submit(self, dry=False):
         super(ProductionSubmitter, self).submit(dry=dry)
 
-        for module, code_tarball in self.module_tarballs.items:
+        for module, code_tarball in self.module_tarballs.items():
             # Make sure the .sh will install the code tarball
             self.sh.add_code_tarball(code_tarball)
             # Make sure the .jdl will transfer the code tarball
