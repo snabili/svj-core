@@ -90,7 +90,7 @@ class PySubmitter(Submitter):
         svj.core.utils.create_directory(self.rundir, must_not_exist=True, dry=dry)
         with svj.core.utils.switchdir(self.rundir, dry=dry):
             # Copy the python file
-            svj.core.utils.copy_file(self.python_file, self.python_file_basename)
+            svj.core.utils.copy_file(self.python_file, self.python_file_basename, dry=dry)
             # Create the code tarballs
             self.create_module_tarballs(dry=dry)
             # Create also a small script to delete the output and logs
@@ -121,6 +121,8 @@ class PyCMSSWSubmitter(PySubmitter):
 
     def submit(self, dry=False):
         super(PyCMSSWSubmitter, self).submit(dry=dry)
+        if self.n_jobs > 1:
+            self.jdl.queue = 'queue {0}'.format(self.n_jobs)
         with svj.core.utils.switchdir(self.rundir, dry=dry):
             # Copy the CMSSW tarball and make sure it's transferred
             svj.core.utils.copy_file(self.cmssw_tarball, osp.basename(self.cmssw_tarball), dry=dry)

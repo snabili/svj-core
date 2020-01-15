@@ -3,7 +3,7 @@
 from __future__ import print_function
 
 import os.path as osp
-import logging, subprocess, os, shutil, re, pprint, csv, glob
+import logging, subprocess, os, shutil, re, pprint, csv, glob, math
 
 logger = logging.getLogger('root')
 subprocess_logger = logging.getLogger('subprocess')
@@ -268,8 +268,7 @@ def copy_file(src, dst, overwrite=False, dry=False):
             remove_file(dst)
         else:
             raise OSError(
-                '%s already exists, abort copying',
-                dst
+                '{0} already exists, abort copying'.format(dst)
                 )
     logger.info('Copying {0} --> {1}'.format(src, dst))
     if not dry: shutil.copyfile(src, dst)
@@ -308,6 +307,15 @@ def read_preprocessing_directives(filename):
     return r
 
 
+def is_string(string):
+    # Python 2 / 3 compatibility (https://stackoverflow.com/a/22679982/9209944)
+    try:
+        basestring
+    except NameError:
+        basestring = str
+    return isinstance(string, basestring)
+
+
 def tarball(module, outfile=None, dry=False):
     """
     Takes a python module or a path to a file of said module, goes to the associated
@@ -318,14 +326,8 @@ def tarball(module, outfile=None, dry=False):
         logger.info('Dry mode: Would create tarball')
         return 'path/to/tarball.tar'
 
-    # Python 2 / 3 compatibility (https://stackoverflow.com/a/22679982/9209944)
-    try:
-        basestring
-    except NameError:
-        basestring = str
-
     # Input variable may be a path
-    if isinstance(module, basestring):
+    if is_string(module):
         # Treat the input variable as a path
         path = module
     else:
@@ -442,3 +444,21 @@ def check_is_cmssw_path(path):
             '{0} is not a directory (path: {1})'
             .format(osp.join(path, 'src'), abs_path)
             )
+
+def get_ith_chunk(i, n_chunks, all):
+    n_all = len(all)
+    n_per_chunk = math.ceil(float(n_all) / n_chunks)
+    i_begin = i * n_per_chunk
+    i_end = (i+1) * n_per_chunk
+    if i_begin >= n_all:
+        return []
+    elif i_end >= n_all:
+        return all[i_begin:]
+    else:
+        return all[i_begin:i_end]
+
+
+
+
+
+
