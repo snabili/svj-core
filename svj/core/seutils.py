@@ -119,4 +119,6 @@ def list_root_files(directory):
     Lists all root files in a directory on the se
     """
     contents = list_directory(directory)
-    return [ f for f in contents if f.endswith('.root') ]
+    root_files = [ f for f in contents if f.endswith('.root') ]
+    root_files.sort()
+    return root_files
