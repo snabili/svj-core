@@ -448,8 +448,8 @@ def check_is_cmssw_path(path):
 def get_ith_chunk(i, n_chunks, all):
     n_all = len(all)
     n_per_chunk = math.ceil(float(n_all) / n_chunks)
-    i_begin = i * n_per_chunk
-    i_end = (i+1) * n_per_chunk
+    i_begin = int(i * n_per_chunk)
+    i_end = int((i+1) * n_per_chunk)
     if i_begin >= n_all:
         return []
     elif i_end >= n_all:
