@@ -3,7 +3,7 @@
 from __future__ import print_function
 
 import os.path as osp
-import logging, subprocess, os, shutil, re, pprint, csv
+import logging, subprocess, os, shutil, re, pprint, csv, glob
 
 logger = logging.getLogger('root')
 subprocess_logger = logging.getLogger('subprocess')
@@ -248,15 +248,31 @@ def compile_cmssw(workdir, version, arch):
     compile_cmssw_src(osp.join(workdir, version))
 
 
-def remove_file(file):
+def remove_file(file, dry=False):
     """
     Removes a file only if it exists, and logs
     """
     if osp.isfile(file):
         logger.warning('Removing {0}'.format(file))
-        os.remove(file)
+        if not dry: os.remove(file)
     else:
         logger.info('No file {0} to remove'.format(file))
+
+
+def copy_file(src, dst, overwrite=False, dry=False):
+    """
+    Copies a file
+    """
+    if not(dry) and osp.isfile(dst):
+        if overwrite:
+            remove_file(dst)
+        else:
+            raise OSError(
+                '%s already exists, abort copying',
+                dst
+                )
+    logger.info('Copying {0} --> {1}'.format(src, dst))
+    if not dry: shutil.copyfile(src, dst)
 
 
 def remove_dir(directory):

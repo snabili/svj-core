@@ -84,7 +84,7 @@ class JDLPythonFile(JDLBase):
     def __init__(self, sh_file, python_file):
         super(JDLPythonFile, self).__init__(sh_file)
         self.python_file = osp.abspath(python_file)
-        self.transfer_input_files.append(self.python_file)
+        self.transfer_input_files.append(osp.basename(self.python_file)) # Use the copied version
 
     def configure(self):
         super(JDLPythonFile, self).configure()
@@ -131,8 +131,9 @@ class SHBase(JobFileBase):
         self.lines = []
 
     def parse(self):
-        return '\n'.join(self.lines)
-
+        parsed = '\n'.join(self.lines)
+        logger.info('Parsed the following sh file:\n{0}'.format(parsed))
+        return parsed
 
 class SHClean(SHBase):
     """docstring for SHClean"""

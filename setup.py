@@ -11,5 +11,7 @@ setup(
     author_email  = 'tklijnsm@gmail.com',
     packages      = find_packages(),
     zip_safe      = False,
-    scripts       = [],
+    scripts       = [
+        'svj/bin/svj-pyjob-cmssw',
+        ],
     )

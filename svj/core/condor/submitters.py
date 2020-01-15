@@ -64,6 +64,9 @@ class PySubmitter(Submitter):
         if self.preprocessing_override('tarball'):
             svj.genprod.SVJ_TARBALL = self.tarball
 
+        self.sh_file = osp.join(self.rundir, self.python_file_basename.replace('.py', '.sh'))
+        self.jdl_file = osp.join(self.rundir, self.python_file_basename.replace('.py', '.jdl'))
+
 
     def preprocessing_override(self, key, type=str):
         """
@@ -87,11 +90,48 @@ class PySubmitter(Submitter):
         svj.core.utils.create_directory(self.rundir, must_not_exist=True, dry=dry)
         with svj.core.utils.switchdir(self.rundir, dry=dry):
             # Copy the python file
-            logger.info('Copying {0} --> {1}'.format(self.python_file, self.python_file_basename))
-            if not dry: shutil.copyfile(self.python_file, self.python_file_basename)
+            svj.core.utils.copy_file(self.python_file, self.python_file_basename)
             # Create the code tarballs
             self.create_module_tarballs(dry=dry)
+            # Create also a small script to delete the output and logs
+            svj.core.condor.jobfiles.SHClean().to_file('clean.sh', dry=dry)
 
+        for module, code_tarball in self.module_tarballs.items():
+            # Make sure the .sh will install the code tarball
+            self.sh.add_code_tarball(code_tarball)
+            # Make sure the .jdl will transfer the code tarball
+            self.jdl.transfer_input_files.append(code_tarball)
+
+
+class PyCMSSWSubmitter(PySubmitter):
+    """docstring for PyCMSSWSubmitter"""
+    def __init__(self, python_file, cmssw_tarball=None):
+        super(PyCMSSWSubmitter, self).__init__(python_file)
+
+        self.preprocessing_override('cmssw_tarball')
+        if not(cmssw_tarball is None):
+            self.cmssw_tarball = cmssw_tarball
+        if self.cmssw_tarball is None:
+            raise ValueError('Specify the CMSSW tarball either in the python file or to the submitter.')
+        self.cmssw_tarball = osp.abspath(self.cmssw_tarball)
+
+        self.jdl = svj.core.condor.jobfiles.JDLPythonFile(self.sh_file, self.python_file)
+        self.sh = svj.core.condor.jobfiles.SHPython(self.python_file)
+        self.add_module(svj.core)
+
+    def submit(self, dry=False):
+        super(PyCMSSWSubmitter, self).submit(dry=dry)
+        with svj.core.utils.switchdir(self.rundir, dry=dry):
+            # Copy the CMSSW tarball and make sure it's transferred
+            svj.core.utils.copy_file(self.cmssw_tarball, osp.basename(self.cmssw_tarball), dry=dry)
+            self.jdl.transfer_input_files.append(osp.basename(self.cmssw_tarball))
+
+            # Generate .sh and .jdl files
+            self.sh.to_file(self.sh_file, dry=dry)
+            self.jdl.to_file(self.jdl_file, dry=dry)
+
+            # Submit the job
+            submit_jdl(self.jdl_file, dry=dry)
 
 
 class ProductionSubmitter(PySubmitter):
@@ -102,9 +142,7 @@ class ProductionSubmitter(PySubmitter):
         if not(n_jobs is None): self.n_jobs = n_jobs
 
         self.sh = svj.core.condor.jobfiles.SHPython(self.python_file)
-        self.sh_file = osp.join(self.rundir, self.python_file_basename.replace('.py', '.sh'))
         self.jdl = svj.core.condor.jobfiles.JDLProduction(self.sh_file, self.python_file, self.n_jobs)
-        self.jdl_file = osp.join(self.rundir, self.python_file_basename.replace('.py', '.jdl'))
 
         self.add_module(svj.core)
         self.add_module(svj.genprod)
@@ -112,11 +150,6 @@ class ProductionSubmitter(PySubmitter):
 
     def submit(self, dry=False):
         super(ProductionSubmitter, self).submit(dry=dry)
-        for module, code_tarball in self.module_tarballs.items():
-            # Make sure the .sh will install the code tarball
-            self.sh.add_code_tarball(code_tarball)
-            # Make sure the .jdl will transfer the code tarball
-            self.jdl.transfer_input_files.append(code_tarball)
 
         with svj.core.utils.switchdir(self.rundir, dry=dry):
             # Generate .sh and .jdl files
@@ -124,9 +157,6 @@ class ProductionSubmitter(PySubmitter):
             if self.tarball:
                 self.jdl.transfer_input_files.append(self.tarball)
             self.jdl.to_file(self.jdl_file, dry=dry)
-
-            # Create also a small script to delete the output and logs
-            svj.core.condor.jobfiles.SHClean().to_file('clean.sh', dry=dry)
 
             # Submit the job
             submit_jdl(self.jdl_file, dry=dry)

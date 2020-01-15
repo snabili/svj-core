@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+import os.path as osp
+import argparse, logging, shutil, os
+from time import strftime
+
+import svj.core
+logger = logging.getLogger('root')
+
+def run_parser():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        'pythonfile', type=str,
+        help='Path to the python executable containing the job instructions'
+        )
+    parser.add_argument(
+        '-d', '--dry', action='store_true',
+        help='Only print the .sh and .jdl contents, but do not create files or submit.'
+        )
+    args = parser.parse_args()
+    return args
+
+def main():
+    args = run_parser()
+    submitter = svj.core.condor.submitters.PyCMSSWSubmitter(args.pythonfile)
+    submitter.submit(dry=args.dry)
+
+#____________________________________________________________________
+if __name__ == "__main__":
+    main()
