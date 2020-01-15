@@ -204,7 +204,7 @@ def setup_cmssw(workdir, version, arch):
     logger.info('Done setting up {0} {1} in {2}'.format(version, arch, workdir))
 
 
-def compile_cmssw_src(cmssw_src, arch, clean_env=False):
+def compile_cmssw_src(cmssw_src, arch, clean_env=True):
     """
     Generic function to (re)compile a CMSSW setup
     """
@@ -218,68 +218,9 @@ def compile_cmssw_src(cmssw_src, arch, clean_env=False):
         'export SCRAM_ARCH={0}'.format(arch),
         'cd {0}'.format(cmssw_src),
         'cmsenv',
-        'printenv',
         'scram b',
         ]
-
-    if clean_env:
-        env = os.environ.copy()
-        for var in [
-            'ROOTSYS',
-            'PATH',
-            'LD_LIBRARY_PATH',
-            'DYLD_LIBRARY_PATH',
-            'SHLIB_PATH',
-            'LIBPATH',
-            'PYTHONPATH',
-            'MANPATH',
-            'CMAKE_PREFIX_PATH',
-            'JUPYTER_PATH',
-            # 
-            'CPLUS_INCLUDE_PATH',
-            'ZLIB_HOME',
-            'DAVIX_HOME',
-            'SETUPTOOLS_HOME',
-            'CAIRO_HOME',
-            'PIXMAN_HOME',
-            'TBB_HOME',
-            'PKG_CONFIG_HOME',
-            'PNG_HOME',
-            'BOOST_HOME',
-            'ROOT_HOME',
-            'LIBXML2_HOME',
-            'EXPAT_HOME',
-            'BLAS_HOME',
-            'XROOTD_HOME',
-            'GFAL_HOME',
-            'C_INCLUDE_PATH',
-            'PYTHONHOME',
-            'GPERF_HOME',
-            'NUMPY_HOME',
-            'CXX',
-            'CURL_HOME',
-            'GSL_HOME',
-            'FONTCONFIG_HOME',
-            'SQLITE_HOME',
-            'FREETYPE_HOME',
-            'FC',
-            'VC_HOME',
-            'FFTW_HOME',
-            'VDT_HOME',
-            'ZEROMQ_HOME',
-            'PKG_CONFIG_PATH',
-            'COMPILER_PATH',
-            'R_HOME',
-            'MYSQL_HOME',
-            'CC',
-            'PYTHON_HOME',
-            'ORACLE_HOME',
-            'SRM_IFCE_HOME',
-            'DCAP_HOME',
-            ]:
-            if var in env: del env[var]
-
-    run_multiple_commands(cmds, env=env if clean_env else None)
+    run_multiple_commands(cmds, env=get_clean_env() if clean_env else None)
     logger.info('Done compiling {0} with scram arch {1}'.format(cmssw_src, arch))
 
 
@@ -288,6 +229,65 @@ def compile_cmssw(workdir, version, arch):
     As compile_cmssw_src but takes separated arguments
     """
     compile_cmssw_src(osp.join(workdir, version))
+
+
+def get_clean_env():
+    env = os.environ.copy()
+    for var in [
+        'ROOTSYS',
+        'PATH',
+        'LD_LIBRARY_PATH',
+        'DYLD_LIBRARY_PATH',
+        'SHLIB_PATH',
+        'LIBPATH',
+        'PYTHONPATH',
+        'MANPATH',
+        'CMAKE_PREFIX_PATH',
+        'JUPYTER_PATH',
+        # Added due to ROOT-env.sh
+        'CPLUS_INCLUDE_PATH',
+        'ZLIB_HOME',
+        'DAVIX_HOME',
+        'SETUPTOOLS_HOME',
+        'CAIRO_HOME',
+        'PIXMAN_HOME',
+        'TBB_HOME',
+        'PKG_CONFIG_HOME',
+        'PNG_HOME',
+        'BOOST_HOME',
+        'ROOT_HOME',
+        'LIBXML2_HOME',
+        'EXPAT_HOME',
+        'BLAS_HOME',
+        'XROOTD_HOME',
+        'GFAL_HOME',
+        'C_INCLUDE_PATH',
+        'PYTHONHOME',
+        'GPERF_HOME',
+        'NUMPY_HOME',
+        'CXX',
+        'CURL_HOME',
+        'GSL_HOME',
+        'FONTCONFIG_HOME',
+        'SQLITE_HOME',
+        'FREETYPE_HOME',
+        'FC',
+        'VC_HOME',
+        'FFTW_HOME',
+        'VDT_HOME',
+        'ZEROMQ_HOME',
+        'PKG_CONFIG_PATH',
+        'COMPILER_PATH',
+        'R_HOME',
+        'MYSQL_HOME',
+        'CC',
+        'PYTHON_HOME',
+        'ORACLE_HOME',
+        'SRM_IFCE_HOME',
+        'DCAP_HOME',
+        ]:
+        if var in env: del env[var]
+    return env
 
 
 def remove_file(file, dry=False):
