@@ -12,9 +12,8 @@ class CMSSWTarball(object):
 
     def extract(self):
         svj.core.utils.create_directory(self.rundir, force=True)
-        with svj.core.utils.switchdir(self.rundir):
-            cmssw_dir = svj.core.utils.extract_tarball_cmssw(self.tarball)
-            self.cmssw_src = osp.abspath(osp.join(cmssw_dir, 'src'))
+        cmssw_dir = svj.core.utils.extract_tarball_cmssw(self.tarball, outdir=self.rundir)
+        self.cmssw_src = osp.abspath(osp.join(cmssw_dir, 'src'))
 
     def rename_project(self):
         if self._is_renamed: return
