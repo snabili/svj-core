@@ -4,7 +4,7 @@ from __future__ import print_function
 import os.path as osp
 import logging, os, collections
 from time import strftime
-import svj.genprod
+import svj.core
 logger = logging.getLogger('root')
 
 
