@@ -140,9 +140,9 @@ class SHClean(SHBase):
     def __init__(self):
         super(SHClean, self).__init__()
         self.lines.extend([
-            'rm *.stdout    > /dev/null 2>& 1'
-            'rm *.stderr    > /dev/null 2>& 1'
-            'rm *.log       > /dev/null 2>& 1'
+            'rm *.stdout    > /dev/null 2>& 1',
+            'rm *.stderr    > /dev/null 2>& 1',
+            'rm *.log       > /dev/null 2>& 1',
             'rm docker_stderror > /dev/null 2>& 1'
             ])
 

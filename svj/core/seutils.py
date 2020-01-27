@@ -112,7 +112,7 @@ def list_directory(directory):
     """
     mgm, directory = _safe_split_mgm(directory)
     contents = svj.core.utils.run_command([ 'xrdfs', mgm, 'ls', directory ])
-    return [ l.strip() for l in contents if not len(l.strip()) == 0 ]
+    return [ format(l.strip(), mgm=mgm) for l in contents if not len(l.strip()) == 0 ]
 
 def list_root_files(directory):
     """

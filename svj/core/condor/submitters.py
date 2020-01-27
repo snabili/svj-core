@@ -6,6 +6,7 @@ import os.path as osp
 import logging, os, collections, shutil
 from time import strftime
 import svj.core
+import svj.genprod
 logger = logging.getLogger('root')
 
 
