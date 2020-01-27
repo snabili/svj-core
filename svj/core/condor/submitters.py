@@ -6,7 +6,6 @@ import os.path as osp
 import logging, os, collections, shutil
 from time import strftime
 import svj.core
-import svj.genprod
 logger = logging.getLogger('root')
 
 
@@ -62,8 +61,6 @@ class PySubmitter(Submitter):
         self.preprocessing_override('n_jobs', int)
         self.preprocessing_override('n_events', int)
         self.preprocessing_override('seed', int)
-        if self.preprocessing_override('tarball'):
-            svj.genprod.SVJ_TARBALL = self.tarball
 
         self.sh_file = osp.join(self.rundir, self.python_file_basename.replace('.py', '.sh'))
         self.jdl_file = osp.join(self.rundir, self.python_file_basename.replace('.py', '.jdl'))
@@ -148,7 +145,11 @@ class ProductionSubmitter(PySubmitter):
         self.jdl = svj.core.condor.jobfiles.JDLProduction(self.sh_file, self.python_file, self.n_jobs)
 
         self.add_module(svj.core)
+
+        import svj.genprod
         self.add_module(svj.genprod)
+        if self.preprocessing_override('tarball'):
+            svj.genprod.SVJ_TARBALL = self.tarball
 
 
     def submit(self, dry=False):
