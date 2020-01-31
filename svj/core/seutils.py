@@ -81,9 +81,25 @@ def is_directory(directory):
     """
     mgm, directory = _safe_split_mgm(directory)
     cmd = [ 'xrdfs', mgm, 'stat', '-q', 'IsDir', directory ]
+    logger.debug('cmd: %s', ' '.join(cmd))
+    
+    try:
+        subprocess.check_call(cmd)
+        return True
+    except subprocess.CalledProcessError as e:
+        logger.info('cmd failed, return code: %s', e.returncode)
+        logger.info('Directory {0} is not a directory'.format(_join_mgm_lfn(mgm, directory)))
+        return False
+        
+def is_file(file):
+    """
+    Returns a boolean indicating whether the directory exists
+    """
+    mgm, file = _safe_split_mgm(file)
+    cmd = [ 'xrdfs', mgm, 'stat', '-q', 'IsReadable', file ]
     status = (subprocess.check_output(cmd) == 0)
     if not status:
-        logger.info('Directory {0} does not exist'.format(_join_mgm_lfn(mgm, directory)))
+        logger.info('File {0} is not a file'.format(_join_mgm_lfn(mgm, file)))
     return status
 
 def copy_to_se(src, dst, create_parent_directory=True):

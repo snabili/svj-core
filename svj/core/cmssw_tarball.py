@@ -25,9 +25,8 @@ class CMSSWTarball(object):
                 'source /cvmfs/cms.cern.ch/cmsset_default.sh',
                 'export SCRAM_ARCH={0}'.format(self.scram_arch),
                 'scram b ProjectRename',
-                'cmsenv',
                 ]
-            svj.core.utils.run_multiple_commands(cmds)
+            svj.core.utils.run_multiple_commands(cmds, env=svj.core.utils.get_clean_env())
 
     def run_command_cmssw_env(self, cmd):
         if not self._is_renamed: self.rename_project()
@@ -36,8 +35,7 @@ class CMSSWTarball(object):
                 'shopt -s expand_aliases',
                 'source /cvmfs/cms.cern.ch/cmsset_default.sh',
                 'export SCRAM_ARCH={0}'.format(self.scram_arch),
-                'scram b ProjectRename',
                 'cmsenv',
                 cmd
                 ]
-            svj.core.utils.run_multiple_commands(cmds)
+            svj.core.utils.run_multiple_commands(cmds, env=svj.core.utils.get_clean_env())

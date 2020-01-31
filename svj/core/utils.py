@@ -501,6 +501,83 @@ def get_ith_chunk(i, n_chunks, all):
 
 
 
+def smart_list_root_files(rootfiles):
+    """
+    Takes a variable input `rootfiles`, and returns a formatted list of valid paths to
+    root files.
+
+    :param rootfiles: A string or list of paths to root files, or directories containing root files
+    :type rootfiles: str, list
+    """
+    import svj.core
+
+    if is_string(rootfiles):
+        rootfiles = [rootfiles]
+
+    processed_root_files = []
+    for rootfile in rootfiles:
+        if rootfile.startswith('root:'):
+            # This is on SE
+            if svj.core.seutils.is_directory(rootfile):
+                # It's a directory
+                processed_root_files.extend(svj.core.seutils.list_root_files(rootfile))
+            elif svj.core.seutils.is_file(rootfile):
+                processed_root_files.append(svj.core.seutils.format(rootfile))
+            else:
+                logger.error('Remote rootfile %s could not be found', rootfile)
+        else:
+            # This is local
+            if osp.isdir(rootfile):
+                processed_root_files.extend(
+                    glob.glob(osp.join(rootfile, '*.root'))
+                    )
+            elif osp.isfile(rootfile):
+                processed_root_files.append(rootfile)
+            else:
+                logger.error('Local rootfile %s could not be found', rootfile)
+
+    if len(processed_root_files) == 0:
+        logger.warning('No root files were found in %s', rootfiles)
+    return processed_root_files
 
 
+
+
+def iter_chunkify_nrange(list_length, n_chunks):
+    n_per_chunk_f = float(list_length) / n_chunks
+    boundaries = [ (i*n_per_chunk_f, (i+1)*n_per_chunk_f) for i in range(n_chunks) ]
+    for left, right in boundaries:
+        indices_in_chunk = []
+        for i in range(list_length):
+            if i >= left and i < right:
+                indices_in_chunk.append(i)
+        yield indices_in_chunk
+
+def iter_chunkify(mylist, n_chunks):
+    for indices in iter_chunkify_nrange(len(mylist), n_chunks):
+        yield [ mylist[i] for i in indices ]
+
+def chunkify(mylist, n_chunks):
+    return list(iter_chunkify(mylist, n_chunks))
+
+def get_rootfiles_for_job(list_of_rootfile_directories, n_jobs, i_job):
+    """
+    :param list_of_rootfile_directories: List of directories that contain .root files
+    :type list_of_rootfile_directories: list
+    :param n_jobs: Number of jobs over which to split up root files
+    :type n_jobs: int
+    :param i_job: The ith job for which to return a list of root files
+    :type i_job: int
+    """
+    # Find which rootfile directory to use for job i_job
+    for i_directory, job_ids in enumerate(iter_chunkify(range(n_jobs), len(list_of_rootfile_directories))):
+        if i_job in job_ids:
+            break
+    directory = list_of_rootfile_directories[i_directory]
+    rootfiles = smart_list_root_files(directory)
+    # Further chunkify the rootfiles in this directory, and return the right chunk
+    i_sub_chunk = job_ids.index(i_job)
+    n_sub_chunks = len(job_ids)
+    rootfiles_for_this_job = chunkify(rootfiles, n_sub_chunks)[i_sub_chunk]
+    return directory, rootfiles_for_this_job
 
