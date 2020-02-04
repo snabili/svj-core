@@ -501,46 +501,58 @@ def get_ith_chunk(i, n_chunks, all):
 
 
 
-def smart_list_root_files(rootfiles):
+def _smart_list_root_file_or_dir(path):
     """
-    Takes a variable input `rootfiles`, and returns a formatted list of valid paths to
-    root files.
-
-    :param rootfiles: A string or list of paths to root files, or directories containing root files
-    :type rootfiles: str, list
+    Takes a path to
+    - a local or remote root file
+    - a local or remote directory containing root files
+    and returns a list of root files
     """
     import svj.core
-
-    if is_string(rootfiles):
-        rootfiles = [rootfiles]
-
-    processed_root_files = []
-    for rootfile in rootfiles:
-        if rootfile.startswith('root:'):
-            # This is on SE
-            if svj.core.seutils.is_directory(rootfile):
-                # It's a directory
-                processed_root_files.extend(svj.core.seutils.list_root_files(rootfile))
-            elif svj.core.seutils.is_file(rootfile):
-                processed_root_files.append(svj.core.seutils.format(rootfile))
-            else:
-                logger.error('Remote rootfile %s could not be found', rootfile)
+    if path.startswith('root:') or path.startswith('/store'):
+        # This is on SE
+        if svj.core.seutils.is_directory(path):
+            # It's a directory
+            return svj.core.seutils.list_root_files(path)
+        elif svj.core.seutils.is_file(path):
+            return [svj.core.seutils.format(path)]
         else:
-            # This is local
-            if osp.isdir(rootfile):
-                processed_root_files.extend(
-                    glob.glob(osp.join(rootfile, '*.root'))
-                    )
-            elif osp.isfile(rootfile):
-                processed_root_files.append(rootfile)
-            else:
-                logger.error('Local rootfile %s could not be found', rootfile)
-
-    if len(processed_root_files) == 0:
-        logger.warning('No root files were found in %s', rootfiles)
-    return processed_root_files
+            logger.error('Remote path %s could not be found; skipping', path)
+            return []
+    else:
+        # This is local
+        if osp.isdir(path):
+            return glob.glob(osp.join(path, '*.root'))
+        elif osp.isfile(path):
+            return [path]
+        else:
+            logger.error('Local path %s could not be found; skipping', path)
+            return []
 
 
+def smart_list_root_files(root_file_collection):
+    """
+
+    Takes a string or nested list of root files, or directories containing 
+    root files.
+
+    Recursively calls itself to find all root files in any nested structure.
+
+    :param root_file_collection: A string or list of paths to root files, or directories containing root files
+    :type root_file_collection: str, list
+    """
+    all_root_files = []
+    if is_string(root_file_collection): root_file_collection = [root_file_collection]
+
+    for path in root_file_collection:
+        if is_string(path):
+            all_root_files.extend(_smart_list_root_file_or_dir(path))
+        else:
+            # Call this function recursively until _smart_list_root_file_or_dir
+            # can be safely called on a string
+            all_root_files.extend(smart_list_root_files(path))
+
+    return all_root_files
 
 
 def iter_chunkify_nrange(list_length, n_chunks):
